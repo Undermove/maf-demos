@@ -21,6 +21,16 @@ public sealed class BoardTools(GitHubClient client, string owner, string repo, s
 
     private readonly HttpClient _http = CreateHttp(token);
 
+    [Description("List open task cards on the board: number, title and status label of each")]
+    public async Task<string> ListCards()
+    {
+        var issues = await client.Issue.GetAllForRepository(owner, repo);
+        var cards = issues
+            .Where(i => i.PullRequest is null)
+            .Select(i => $"#{i.Number}: {i.Title} [{string.Join(", ", i.Labels.Select(l => l.Name))}]");
+        return string.Join("\n", cards);
+    }
+
     [Description("Read a task card from the board")]
     public async Task<string> ReadCard(
         [Description("Card (issue) number")] int number)

@@ -23,7 +23,7 @@ public sealed class StepsDb(string path)
           id: clarify_requirements
           name: "Выяснить требования для открытия страны"
           lane: Preparation
-          description: "Карточка задачи — №4 на доске https://github.com/Undermove/maf-country-opening-demo/issues/4"
+          description: "Карточка задачи лежит на доске «Открытие стран»"
           depends_on: []
           required_data: []
 
@@ -35,7 +35,7 @@ public sealed class StepsDb(string path)
                 - id: read_card
                   depends_on: []
                   type: ai
-                  instruction: "Прочитать карточку задачи №4 на доске."
+                  instruction: "Найти на доске карточку про открытие новой страны и прочитать её."
                 - id: ask_languages
                   depends_on: [read_card]
                   type: manual
@@ -43,7 +43,8 @@ public sealed class StepsDb(string path)
                 - id: save_languages
                   depends_on: [ask_languages]
                   type: ai
-                  instruction: "Записать выясненные языки комментарием в карточку №4 и передвинуть карточку в in-progress."
+                  instruction: "Привести названия языков к двухбуквенным ISO-кодам (например, «грузинский и английский» → ka, en),
+                                записать их комментарием в карточку и передвинуть карточку в in-progress."
         """,
         """
         # yaml-language-server: $schema=../schema.json
@@ -70,7 +71,7 @@ public sealed class StepsDb(string path)
                   depends_on: [read_sample]
                   type: ai
                   instruction: "Создать ветку feature/country-ge и добавить countries/ge.json строго по структуре
-                                образца: код ge, валюта GEL, языки — выясненные на предыдущем шаге, status: opening."
+                                образца: код ge, валюта GEL, языки — коды, выясненные на предыдущем шаге, status: opening."
         """,
         """
         # yaml-language-server: $schema=../schema.json
@@ -96,7 +97,7 @@ public sealed class StepsDb(string path)
                 - id: link_pr
                   depends_on: [open_pr]
                   type: ai
-                  instruction: "Добавить ссылку на PR комментарием в карточку №4 и передвинуть карточку в done."
+                  instruction: "Добавить ссылку на PR комментарием в карточку задачи и передвинуть карточку в done."
         """,
     ];
 

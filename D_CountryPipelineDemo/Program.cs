@@ -78,6 +78,7 @@ var agent = new ChatClientAgent(
                 "Выполняй ТОЛЬКО текущую карточку, не выдумывай данные, кратко отчитывайся по-русски.",
             Tools =
             [
+                AIFunctionFactory.Create(board.ListCards),
                 AIFunctionFactory.Create(board.ReadCard),
                 AIFunctionFactory.Create(board.AddCardComment),
                 AIFunctionFactory.Create(board.MoveCard),

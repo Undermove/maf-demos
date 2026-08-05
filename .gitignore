@@ -1,0 +1,13 @@
+# Локальные секреты — НЕ коммитим (ключи OpenAI/GitHub/Telegram лежат тут)
+appsettings.local.json
+
+# Build-артефакты .NET
+bin/
+obj/
+
+# IDE
+.idea/
+*.DotSettings.user
+
+# Локальная БД шагов демо D
+pipeline.db

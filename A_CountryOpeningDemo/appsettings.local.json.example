@@ -1,0 +1,9 @@
+{
+  "OpenAI": {
+    "ApiKey": "sk-ВПИШИ-СВОЙ-КЛЮЧ",
+    "BaseUrl": "https://api.openai.com/v1"
+  },
+  "GitHub": {
+    "Token": "ghp_ВПИШИ-СВОЙ-PAT-СО-SCOPE-repo"
+  }
+}

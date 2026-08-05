@@ -1,0 +1,6 @@
+{
+  "OpenAI": {
+    "ApiKey": "sk-ВПИШИ-СВОЙ-КЛЮЧ",
+    "BaseUrl": "https://api.openai.com/v1"
+  }
+}

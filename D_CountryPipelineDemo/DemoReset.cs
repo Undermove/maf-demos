@@ -11,10 +11,15 @@ namespace D_CountryPipelineDemo;
 /// </summary>
 public static class DemoReset
 {
-    private const int CardNumber = 4;
-
-    public static async Task RunAsync(GitHubClient client, string owner, string repo, string token)
+    public static async Task RunAsync(GitHubClient client, string owner, string repo, string token, StepsDb db)
     {
+        var cards = db.CardNumbers();
+        if (cards.Count == 0)
+        {
+            Console.WriteLine("⚠ Карточки ещё не созданы. Сначала: dotnet run -- seed");
+            return;
+        }
+
         Console.WriteLine("→ Закрываю открытые PR…");
         foreach (var pr in await client.PullRequest.GetAllForRepository(owner, repo,
                      new PullRequestRequest { State = ItemStateFilter.Open }))
@@ -31,31 +36,32 @@ public static class DemoReset
                 Console.WriteLine($"  ветка {branch.Name} удалена");
             }
 
-        Console.WriteLine($"→ Карточка #{CardNumber}: переоткрываю, чищу комменты, лейбл → backlog…");
-        var update = new IssueUpdate { State = ItemState.Open };   // доска закрывает issue при Done — возвращаем
-        var issue = await client.Issue.Get(owner, repo, CardNumber);
-        foreach (var label in issue.Labels.Where(l => l.Name.StartsWith("status:")))
-            update.RemoveLabel(label.Name);
-        update.AddLabel("status:backlog");
-        await client.Issue.Update(owner, repo, CardNumber, update);
-
-        foreach (var comment in await client.Issue.Comment.GetAllForIssue(owner, repo, CardNumber))
-            await client.Issue.Comment.Delete(owner, repo, comment.Id);
-
-        Console.WriteLine("→ Доска: карточка из архива → колонка Todo…");
-        await ResetBoardAsync(owner, repo, token);
-
-        var dbPath = Path.Combine(AppContext.BaseDirectory, "pipeline.db");
-        if (File.Exists(dbPath))
+        foreach (var cardNumber in cards)
         {
-            File.Delete(dbPath);
-            Console.WriteLine("→ БД шагов сброшена.");
+            Console.WriteLine($"→ Карточка #{cardNumber}: переоткрываю, чищу комменты, лейбл → backlog…");
+            var update = new IssueUpdate { State = ItemState.Open };   // доска закрывает issue при Done — возвращаем
+            var issue = await client.Issue.Get(owner, repo, cardNumber);
+            foreach (var label in issue.Labels.Where(l => l.Name.StartsWith("status:")))
+                update.RemoveLabel(label.Name);
+            update.AddLabel("status:backlog");
+            await client.Issue.Update(owner, repo, cardNumber, update);
+
+            foreach (var comment in await client.Issue.Comment.GetAllForIssue(owner, repo, cardNumber))
+                await client.Issue.Comment.Delete(owner, repo, comment.Id);
+
+            Console.WriteLine($"→ Доска: карточка #{cardNumber} из архива → колонка Todo…");
+            await ResetBoardAsync(owner, repo, token, cardNumber);
         }
+
+        // Именно сбрасываем флаги, а НЕ удаляем файл: в базе лежит привязка шагов к карточкам,
+        // и если её снести, придётся заново гонять seed.
+        db.ResetProgress();
+        Console.WriteLine("→ Прогресс шагов сброшен (привязка к карточкам сохранена).");
 
         Console.WriteLine("✅ Демо готово к запуску с чистого листа.");
     }
 
-    private static async Task ResetBoardAsync(string owner, string repo, string token)
+    private static async Task ResetBoardAsync(string owner, string repo, string token, int cardNumber)
     {
         using var http = new HttpClient();
         http.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
@@ -64,7 +70,7 @@ public static class DemoReset
         var data = await GraphQlAsync(http, $$"""
             query {
               repository(owner: "{{owner}}", name: "{{repo}}") {
-                issue(number: {{CardNumber}}) {
+                issue(number: {{cardNumber}}) {
                   projectItems(first: 5, includeArchived: true) {
                     nodes {
                       id

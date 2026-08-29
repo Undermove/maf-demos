@@ -7,9 +7,10 @@ public sealed class GitHubTools(GitHubClient client, string owner, string repo)
 {
     [Description("Read a file from the repository (main branch)")]
     public async Task<string> ReadFile(
-        [Description("File path, e.g. countries/germany.json")] string path)
+        [Description("File path, e.g. src/Program.cs")] string path)
     {
-        var files = await client.Repository.Content.GetAllContents(owner, repo, path);
+        var files = await client.Repository
+            .Content.GetAllContents(owner, repo, path);
         Log($"ReadFile(\"{path}\")");
         return files[0].Content;
     }

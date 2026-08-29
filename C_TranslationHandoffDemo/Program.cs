@@ -28,13 +28,16 @@ IChatClient miniClient = openAi.GetChatClient(miniModel).AsIChatClient();
 // gpt-4o
 IChatClient strongClient = openAi.GetChatClient(strongModel).AsIChatClient();
 
-// Диспетчер на малой модели: большие языки переводит сам, малые — передаёт эксперту.
+// Диспетчер на малой модели. Список «плохих» языков НЕ зашит: модель сама оценивает,
+// потянет ли она этот язык. Где проходит граница — свойство конкретной модели, а не факт
+// про мир: у следующей версии она сдвинется, и хардкод протухнет.
 AIAgent dispatcher = new ChatClientAgent(
     miniClient,
     name: "gpt-4o-mini",
     instructions: "You translate the user's text into the requested target language and output ONLY the translation. " +
-                  "IMPORTANT: if the target language is low-resource (ka, hy, az, kk, ky, uz, tg), " +
-                  "DO NOT translate yourself — hand off to expert_translator.");
+                  "You are strong at widely-spoken languages — translate those yourself, do not hand off. " +
+                  "Hand off to expert_translator ONLY if the target language is one you genuinely handle poorly, " +
+                  "where your output would be clumsy or transliterated instead of idiomatic.");
 
 // Эксперт на старшей модели. Temperature = 0 — на сцене каждый прогон одинаково хороший.
 AIAgent expert = new ChatClientAgent(
@@ -46,7 +49,7 @@ AIAgent expert = new ChatClientAgent(
 // ВЕСЬ воркфлоу: готовая handoff-оркестрация из AgentWorkflowBuilder.
 Workflow workflow = AgentWorkflowBuilder
     .CreateHandoffBuilderWith(dispatcher)
-    .WithHandoff(from: dispatcher, to: expert, "Target language is low-resource (ka, hy, az, kk, ky, uz, tg)")
+    .WithHandoff(from: dispatcher, to: expert, "The dispatcher is not confident it can translate into this language well")
     .Build();
 
 // Воркфлоу — это тоже агент: дальше запускаем его как обычного агента, без TurnToken и событий.

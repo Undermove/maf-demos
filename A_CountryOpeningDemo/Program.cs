@@ -23,11 +23,7 @@ var githubToken = config["GitHub:Token"]
 var owner = config["GitHub:Owner"] ?? "Undermove";
 var repo = config["GitHub:Repo"] ?? "maf-country-opening-demo";
 var baseUrl = config["OpenAI:BaseUrl"];
-var model = config["OpenAI:MiniModel"] ?? "gpt-4o-mini";
-
-var openAi = string.IsNullOrWhiteSpace(baseUrl)
-    ? new OpenAIClient(new ApiKeyCredential(apiKey))
-    : new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions { Endpoint = new Uri(baseUrl) });
+var gptOMini = config["OpenAI:MiniModel"] ?? "gpt-4o-mini";
 
 var github = new Octokit.GitHubClient(new Octokit.ProductHeaderValue("maf-country-opening-demo"))
 {
@@ -36,24 +32,29 @@ var github = new Octokit.GitHubClient(new Octokit.ProductHeaderValue("maf-countr
 
 #endregion
 
+
 // Создаем чат-клиента, который вызывает АПИ
-ChatClient chatClient = openAi.GetChatClient(model);
+var openAi = new OpenAIClient(new ApiKeyCredential(apiKey));
+ChatClient chatClient = openAi.GetChatClient(gptOMini);
 
 // Создаем инструменты и превращаем в список AITool
 var tools = new GitHubTools(github, owner, repo);
-IList<AITool> aiTools = [AIFunctionFactory.Create(tools.ReadFile)];
+IList<AITool> aiTools = [
+    AIFunctionFactory.Create(tools.ReadFile),
+];
 
 // Соединяем все в агента = модель + инструменты
 ChatClientAgent agent = chatClient.AsAIAgent(
-    instructions: "Ты помощник по репозиторию Dodo. Используй инструменты, отвечай по-русски и коротко.",
+    instructions: "Ты помощник по репозиторию Dodo. Используй инструменты, " +
+                  "отвечай коротко.",
     name: "RepoAgent",
     tools: aiTools);
 
-const string question = "Прочитай countries/germany.json и расскажи, о чём этот файл.";
+const string prompt = "Прочитай countries/germany.json и расскажи, о чём этот файл.";
 
 Console.WriteLine($"▶ Репозиторий: https://github.com/{owner}/{repo}");
-Console.WriteLine($"▶ Вопрос: {question}\n");
+Console.WriteLine($"▶ Вопрос: {prompt}\n");
 
-var response = await agent.RunAsync(question);
+var response = await agent.RunAsync(prompt);
 
 Console.WriteLine($"\n■ {response.Text}");

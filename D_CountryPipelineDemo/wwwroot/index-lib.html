@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Открытие страны — статус (через @ag-ui/client)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <h1>Открытие страны — статус</h1>
+  <div class="sub">То же самое, но поток разбирает библиотека <b>@ag-ui/client</b>, а не мы руками.</div>
+
+  <div class="hints">
+    <span class="hint">Посмотри доску и расскажи, как идёт открытие</span>
+    <span class="hint">Что уже сделано, а что нет?</span>
+    <span class="hint">Чего мы ждём от людей?</span>
+  </div>
+
+  <div id="feed"></div>
+</main>
+
+<form id="form"><div class="row">
+  <input id="q" placeholder="Спросите про открытие страны…" autocomplete="off">
+  <button id="send">Спросить</button>
+</div></form>
+
+<script type="module">
+import { HttpAgent } from "./vendor/ag-ui-client.mjs";   // @ag-ui/client 0.0.59, положили локально
+
+const feed = document.getElementById('feed');
+const form = document.getElementById('form');
+const input = document.getElementById('q');
+const send  = document.getElementById('send');
+
+document.querySelectorAll('.hint').forEach(h =>
+  h.onclick = () => { input.value = h.textContent; form.requestSubmit(); });
+
+function block(cls, who){
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.innerHTML = `<div class="who">${who}</div>`;
+  feed.appendChild(d);
+  return d;
+}
+
+// <slide>
+const agent = new HttpAgent({ url: "/agui" });
+
+form.onsubmit = async e => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = ''; send.disabled = true;
+
+  const { tools, answer } = renderNewTurn(text);
+  const chips = {};
+  let reply = '';
+
+  agent.messages.push({ id: crypto.randomUUID(), role: "user", content: text });
+
+  // Библиотека сама читает SSE и раскладывает поток на типизированные события
+  try {
+  await agent.runAgent({}, {
+    onToolCallStartEvent: ({ event }) => chips[event.toolCallId] = addChip(tools, event.toolCallName),
+    onToolCallResultEvent: ({ event }) => fillChip(chips[event.toolCallId], event.content),
+    onTextMessageContentEvent: ({ event }) => answer.textContent = (reply += event.delta ?? ''),
+    onRunErrorEvent: ({ event }) => answer.textContent = 'Ошибка: ' + (event.message ?? 'неизвестно'),
+  });
+  } catch (err) { answer.textContent = 'RUN ERROR: ' + (err?.message ?? err); console.error(err); }
+
+  send.disabled = false;
+  input.focus();
+};
+// </slide>
+
+// ?ask=... — открыть страницу сразу с вопросом (удобно для демо со сцены)
+const preset = new URLSearchParams(location.search).get('ask');
+if (preset) { input.value = preset; form.requestSubmit(); }
+
+function renderNewTurn(text){
+  const mine = block('me', 'вы');
+  const b = document.createElement('div'); b.className = 'bubble'; b.textContent = text;
+  mine.appendChild(b);
+
+  const agentBlock = block('agent', 'агент');
+  const tools = document.createElement('div'); tools.className = 'tools';
+  const answer = document.createElement('div'); answer.className = 'bubble'; answer.textContent = '';
+  agentBlock.append(tools, answer);
+  window.scrollTo(0, document.body.scrollHeight);
+  return { tools, answer };
+}
+
+function addChip(tools, name){
+  const el = document.createElement('details');
+  el.className = 'tool';
+  el.innerHTML = `<summary><span class="dot"></span><span>вызывает</span>
+                  <span class="name">${name}</span></summary><pre></pre>`;
+  tools.appendChild(el);
+  return el;
+}
+
+function fillChip(el, content){
+  if (!el) return;
+  el.classList.add('done');
+  el.querySelector('span:nth-child(2)').textContent = 'прочитал';
+  let c = content;
+  try { c = JSON.parse(c); } catch {}
+  el.querySelector('pre').textContent = typeof c === 'string' ? c : JSON.stringify(c, null, 2);
+}
+</script>
+</body>
+</html>

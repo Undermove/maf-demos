@@ -44,7 +44,7 @@ IList<AITool> aiTools = [
 ];
 
 // Соединяем все в агента = модель + инструменты
-ChatClientAgent agent = chatClient.AsAIAgent(
+AIAgent agent = chatClient.AsAIAgent(
     instructions: "Ты помощник по репозиторию Dodo. Используй инструменты, " +
                   "отвечай коротко.",
     name: "RepoAgent",

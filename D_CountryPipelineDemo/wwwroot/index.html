@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Открытие страны — статус</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <h1>Открытие страны — статус</h1>
+  <div class="sub">Агент на Microsoft Agent Framework. Протокол AG-UI: видно не только ответ, но и что агент делает по дороге.</div>
+
+  <div class="hints">
+    <span class="hint">Как идёт открытие страны?</span>
+    <span class="hint">Что уже сделано, а что нет?</span>
+    <span class="hint">Чего мы ждём от людей?</span>
+    <span class="hint">Покажи карточку первого шага</span>
+  </div>
+
+  <div id="feed"></div>
+</main>
+
+<form id="form"><div class="row">
+  <input id="q" placeholder="Спросите про открытие страны…" autocomplete="off">
+  <button id="send">Спросить</button>
+</div></form>
+
+<script>
+const feed = document.getElementById('feed');
+const form = document.getElementById('form');
+const input = document.getElementById('q');
+const send  = document.getElementById('send');
+const history = [];
+let n = 0;
+
+document.querySelectorAll('.hint').forEach(h =>
+  h.onclick = () => { input.value = h.textContent; form.requestSubmit(); });
+
+
+function block(cls, who){
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.innerHTML = `<div class="who">${who}</div>`;
+  feed.appendChild(d);
+  return d;
+}
+
+form.onsubmit = async e => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = ''; send.disabled = true;
+
+  const mine = block('me', 'вы');
+  const b = document.createElement('div'); b.className = 'bubble'; b.textContent = text;
+  mine.appendChild(b);
+  history.push({ id: 'm' + (++n), role: 'user', content: text });
+
+  const agent = block('agent', 'агент');
+  const tools = document.createElement('div'); tools.className = 'tools';
+  const answer = document.createElement('div'); answer.className = 'bubble'; answer.textContent = '';
+  agent.append(tools, answer);
+  const chips = {};
+  window.scrollTo(0, document.body.scrollHeight);
+
+  const res = await fetch('/agui', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      threadId: 'demo', runId: 'run' + n,
+      messages: history, tools: [], context: [], state: {}
+    })
+  });
+
+  // AG-UI — это server-sent events: читаем поток и раскладываем события по типам.
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '', reply = '';
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const parts = buffer.split('\n\n');
+    buffer = parts.pop();
+
+    for (const part of parts) {
+      const line = part.split('\n').find(l => l.startsWith('data: '));
+      if (!line) continue;
+      const ev = JSON.parse(line.slice(6));
+
+      if (ev.type === 'TOOL_CALL_START') {
+        const el = document.createElement('details');
+        el.className = 'tool';
+        el.innerHTML = `<summary><span class="dot"></span><span>вызывает</span>
+                        <span class="name">${ev.toolCallName}</span></summary><pre></pre>`;
+        tools.appendChild(el);
+        chips[ev.toolCallId] = el;
+      }
+      else if (ev.type === 'TOOL_CALL_RESULT') {
+        const el = chips[ev.toolCallId];
+        if (el) {
+          el.classList.add('done');
+          el.querySelector('span:nth-child(2)').textContent = 'прочитал';
+          let c = ev.content;
+          try { c = JSON.parse(c); } catch {}
+          el.querySelector('pre').textContent = typeof c === 'string' ? c : JSON.stringify(c, null, 2);
+        }
+      }
+      else if (ev.type === 'TEXT_MESSAGE_CONTENT') {
+        reply += ev.delta ?? '';
+        answer.textContent = reply;
+        window.scrollTo(0, document.body.scrollHeight);
+      }
+      else if (ev.type === 'RUN_ERROR') {
+        answer.textContent = 'Ошибка: ' + (ev.message ?? 'неизвестно');
+      }
+    }
+  }
+
+  history.push({ id: 'm' + (++n), role: 'assistant', content: reply });
+  send.disabled = false;
+  input.focus();
+};
+// ?ask=... — открыть страницу сразу с заданным вопросом (удобно для демо со сцены)
+const preset = new URLSearchParams(location.search).get('ask');
+if (preset) { input.value = preset; form.requestSubmit(); }
+</script>
+</body>
+</html>

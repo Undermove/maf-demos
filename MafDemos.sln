@@ -5,11 +5,11 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "A_CountryOpeningDemo", "A_CountryOpeningDemo\A_CountryOpeningDemo.csproj", "{33EB956B-CB4E-40B7-818C-54B83173B7CA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "C_TranslationHandoffDemo", "C_TranslationHandoffDemo\C_TranslationHandoffDemo.csproj", "{CB9A90BB-A553-45DC-A595-9132DB7E9D69}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D_TranslationHandoffDemo", "D_TranslationHandoffDemo\D_TranslationHandoffDemo.csproj", "{CB9A90BB-A553-45DC-A595-9132DB7E9D69}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "B_BadTranslationDemo", "B_BadTranslationDemo\B_BadTranslationDemo.csproj", "{8598D6F3-6DA1-4ED0-9F37-B637AAC59280}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "C_BadTranslationDemo", "C_BadTranslationDemo\C_BadTranslationDemo.csproj", "{8598D6F3-6DA1-4ED0-9F37-B637AAC59280}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D_CountryPipelineDemo", "D_CountryPipelineDemo\D_CountryPipelineDemo.csproj", "{7161262C-03C8-4C97-9C52-FE3A98F1FC2D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "B_CountryPipelineDemo", "B_CountryPipelineDemo\B_CountryPipelineDemo.csproj", "{7161262C-03C8-4C97-9C52-FE3A98F1FC2D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slides", "Slides\Slides.csproj", "{FB1024F6-C345-4566-8854-57EA27D60073}"
 EndProject

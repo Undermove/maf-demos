@@ -21,14 +21,25 @@ public sealed class BoardTools(GitHubClient client, string owner, string repo, s
 
     private readonly HttpClient _http = CreateHttp(token);
 
-    [Description("List open task cards on the board: number, title and status label of each")]
+    [Description("List all task cards on the board, including finished ones: number, title, column (backlog / in-progress / done) and whether the card is closed")]
     public async Task<string> ListCards()
     {
-        var issues = await client.Issue.GetAllForRepository(owner, repo);
+        // Доска закрывает issue при переносе в Done, а Octokit по умолчанию отдаёт только открытые —
+        // без State = All агент «не видит» уже сделанное и не может ответить, что было выполнено.
+        var issues = await client.Issue.GetAllForRepository(owner, repo,
+            new RepositoryIssueRequest { State = ItemStateFilter.All });
         var cards = issues
             .Where(i => i.PullRequest is null)
-            .Select(i => $"#{i.Number}: {i.Title} [{string.Join(", ", i.Labels.Select(l => l.Name))}]");
-        return string.Join("\n", cards);
+            .OrderBy(i => i.Number)
+            .Select(i =>
+            {
+                var column = i.Labels.Select(l => l.Name)
+                    .FirstOrDefault(n => n.StartsWith("status:"))?["status:".Length..] ?? "unknown";
+                var state = i.State.Value == ItemState.Closed ? "closed" : "open";
+                return $"#{i.Number}: {i.Title} — column: {column}, {state}";
+            })
+            .ToList();
+        return cards.Count == 0 ? "The board has no cards." : string.Join("\n", cards);
     }
 
     [Description("Read a task card from the board")]

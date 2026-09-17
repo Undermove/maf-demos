@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "C_BadTranslationDemo", "C_B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "B_CountryPipelineDemo", "B_CountryPipelineDemo\B_CountryPipelineDemo.csproj", "{7161262C-03C8-4C97-9C52-FE3A98F1FC2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slides", "Slides\Slides.csproj", "{FB1024F6-C345-4566-8854-57EA27D60073}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

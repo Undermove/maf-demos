@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="A_CountryOpeningDemo/A_CountryOpeningDemo.csproj" />
+  <Project Path="B_CountryPipelineDemo/B_CountryPipelineDemo.csproj" />
+  <Project Path="C_BadTranslationDemo/C_BadTranslationDemo.csproj" />
+  <Project Path="D_TranslationHandoffDemo/D_TranslationHandoffDemo.csproj" />
+</Solution>

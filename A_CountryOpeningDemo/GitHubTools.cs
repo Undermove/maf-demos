@@ -28,7 +28,6 @@ public sealed class GitHubTools(GitHubClient client, string owner, string repo)
         }
         catch (ApiValidationException)
         {
-            // Ветка осталась с прошлого прогона демо — не падаем, берём уникальное имя.
             name = $"{name}-{DateTime.Now:HHmmss}";
             await client.Git.Reference.Create(owner, repo, new NewReference($"refs/heads/{name}", main.Object.Sha));
         }

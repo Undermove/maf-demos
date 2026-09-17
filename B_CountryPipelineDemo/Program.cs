@@ -3,7 +3,6 @@ using D_CountryPipelineDemo;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Configuration;
 using OpenAI;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
@@ -72,7 +71,7 @@ var agent = new ChatClientAgent(
     new ChatClientAgentOptions
     {
         Name = "CountryPipelineAgent",
-        UseProvidedChatClientAsIs = true, // конвейер клиента собрали сами — агенту не надо заворачивать его повторно
+        UseProvidedChatClientAsIs = true,
         ChatOptions = new ChatOptions
         {
             Instructions =

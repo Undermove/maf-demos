@@ -52,9 +52,7 @@ public static class DemoReset
             Console.WriteLine($"→ Доска: карточка #{cardNumber} из архива → колонка Todo…");
             await ResetBoardAsync(owner, repo, token, cardNumber);
         }
-
-        // Именно сбрасываем флаги, а НЕ удаляем файл: в базе лежит привязка шагов к карточкам,
-        // и если её снести, придётся заново гонять seed.
+        
         db.ResetProgress();
         Console.WriteLine("→ Прогресс шагов сброшен (привязка к карточкам сохранена).");
 
@@ -94,8 +92,7 @@ public static class DemoReset
         var field = item.GetProperty("project").GetProperty("field");
         var todoId = field.GetProperty("options").EnumerateArray()
             .First(o => o.GetProperty("name").GetString() == "Todo").GetProperty("id").GetString();
-
-        // Доска могла заархивировать Done-карточку — возвращаем (если не в архиве, GitHub вернёт ошибку — глотаем).
+        
         try
         {
             await GraphQlAsync(http, $$"""

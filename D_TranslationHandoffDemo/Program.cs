@@ -63,7 +63,7 @@ Console.WriteLine($"Диспетчер: {miniModel}, эксперт: {strongMode
 Console.WriteLine($"Анонс (ru): {announcement}");
 
 // 1) Большой язык — диспетчер переводит сам.
-await TranslateAsync("Spanish", "es");
+await TranslateAsync("English", "en");
 
 // 2) Малый язык — диспетчер передаёт управление эксперту (хендофф).
 await TranslateAsync("Georgian", "ka");

@@ -17,22 +17,23 @@ public sealed class GitHubTools(GitHubClient client, string owner, string repo)
         return files[0].Content;
     }
 
-    [Description("Create a new branch from main. Returns the actual branch name — use it for commits and the PR.")]
+    [Description("Create a new branch from main. If the branch already exists, it is reused — nothing to fix, just continue with it.")]
     public async Task<string> CreateBranch(
         [Description("Branch name, e.g. feature/country-ge")] string name)
     {
-        var main = await client.Git.Reference.Get(owner, repo, "heads/main");
+        // Идемпотентность: ветка могла остаться от упавшего прогона. Не создаём вторую с другим именем,
+        // а говорим агенту, что она уже есть, — повторный запуск шага продолжает с того же места.
         try
         {
-            await client.Git.Reference.Create(owner, repo, new NewReference($"refs/heads/{name}", main.Object.Sha));
+            await client.Git.Reference.Get(owner, repo, $"heads/{name}");
+            return $"Branch '{name}' already exists — reusing it. Do not create another one; commit to this branch.";
         }
-        catch (ApiValidationException)
+        catch (NotFoundException)
         {
-            // Ветка осталась с прошлого прогона демо — не падаем, берём уникальное имя.
-            name = $"{name}-{DateTime.Now:HHmmss}";
-            await client.Git.Reference.Create(owner, repo, new NewReference($"refs/heads/{name}", main.Object.Sha));
         }
 
+        var main = await client.Git.Reference.Get(owner, repo, "heads/main");
+        await client.Git.Reference.Create(owner, repo, new NewReference($"refs/heads/{name}", main.Object.Sha));
         return $"Branch '{name}' created from main. Use exactly this name for commits and the pull request.";
     }
 
@@ -58,12 +59,19 @@ public sealed class GitHubTools(GitHubClient client, string owner, string repo)
         return $"File {path} committed to '{branch}'.";
     }
 
-    [Description("Open a pull request from a branch into main")]
+    [Description("Open a pull request from a branch into main. If an open PR from this branch already exists, returns it instead of creating a duplicate.")]
     public async Task<string> CreatePullRequest(
         [Description("Source branch")] string branch,
         [Description("PR title")] string title,
         [Description("PR body / description")] string body)
     {
+        // Идемпотентность: PR мог быть создан до падения, а статус шага — не сохранён.
+        // Сначала спрашиваем GitHub, нет ли уже открытого PR из этой ветки.
+        var open = await client.PullRequest.GetAllForRepository(owner, repo,
+            new PullRequestRequest { State = ItemStateFilter.Open, Head = $"{owner}:{branch}" });
+        if (open.Count > 0)
+            return $"PR #{open[0].Number} from '{branch}' is already open: {open[0].HtmlUrl}. Nothing to create — use this link.";
+
         var pr = await client.PullRequest.Create(owner, repo,
             new NewPullRequest(title, branch, "main") { Body = body });
 

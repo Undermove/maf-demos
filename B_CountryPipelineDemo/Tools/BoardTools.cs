@@ -42,12 +42,18 @@ public sealed class BoardTools(GitHubClient client, string owner, string repo, s
         return cards.Count == 0 ? "The board has no cards." : string.Join("\n", cards);
     }
 
-    [Description("Read a task card from the board")]
+    [Description("Read a task card from the board, including its comments")]
     public async Task<string> ReadCard(
         [Description("Card (issue) number")] int number)
     {
         var issue = await client.Issue.Get(owner, repo, number);
-        return $"Card #{number}: {issue.Title}\n\n{issue.Body}";
+        // Комментарии — часть состояния карточки: туда предыдущие шаги кладут результат (языки, валюту, ссылку на PR).
+        // Без них агент после перезапуска не видит, что уже выяснено, и идёт спрашивать заново.
+        var comments = await client.Issue.Comment.GetAllForIssue(owner, repo, number);
+        var commentsText = comments.Count == 0
+            ? "(no comments)"
+            : string.Join("\n", comments.Select(c => $"- {c.Body}"));
+        return $"Card #{number}: {issue.Title}\n\n{issue.Body}\n\nComments:\n{commentsText}";
     }
 
     [Description("Add a comment to a task card")]
